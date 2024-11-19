@@ -7,31 +7,38 @@ interface Authenticatable {
 abstract class Account {
     String name, accType;
     int accNum, accBalance;
+    private static final Set<Integer> usedAccountNumbers = new HashSet<>();
 
-    Account(String name, String accType, int accBalance) {
+    // Constructor to initialize account details
+    void initialize(String name, String accType, int accBalance) {
         this.name = name;
         this.accType = accType;
         this.accBalance = accBalance;
         this.accNum = generateAccountNumber();
     }
 
-    abstract void displayDetails();
-
-    abstract void deposit(int amount);
-
-    abstract void withdraw(int amount);
-
+    // Method to generate unique account numbers
     protected static int generateAccountNumber() {
-        return (int) ((Math.random() * 9000) + 1000);
+        int accNum;
+        do {
+            accNum = (int) ((Math.random() * 9000) + 1000); // Generate a 4-digit number
+        } while (usedAccountNumbers.contains(accNum)); // Ensure it's unique
+        usedAccountNumbers.add(accNum);
+        return accNum;
     }
+
+    // Abstract methods that need to be implemented by subclasses
+    abstract void displayDetails();
+    abstract void deposit(int amount);
+    abstract void withdraw(int amount);
 }
 
 class SavingsAccount extends Account implements Authenticatable {
-    private final String password;
+    private String password;
     private static final double INTEREST_RATE = 0.03; // 3% annual interest
 
-    SavingsAccount(String name, String password, int initialBalance) {
-        super(name, "Savings", initialBalance);
+    void initializeSavings(String name, String password, int initialBalance) {
+        super.initialize(name, "Savings", initialBalance); // Initialize superclass with details
         this.password = password;
     }
 
@@ -72,12 +79,12 @@ class SavingsAccount extends Account implements Authenticatable {
 }
 
 class CurrentAccount extends Account implements Authenticatable {
-    private final String password;
+    private String password;
     private static final int MIN_BALANCE = 1000;
     private static final int PENALTY = 100;
 
-    CurrentAccount(String name, String password, int initialBalance) {
-        super(name, "Current", initialBalance);
+    void initializeCurrent(String name, String password, int initialBalance) {
+        super.initialize(name, "Current", initialBalance);
         this.password = password;
     }
 
@@ -138,29 +145,35 @@ public class Main {
             int choice = in.nextInt();
 
             switch (choice) {
-                case 1:
+                case 1: {
+                    SavingsAccount savings = new SavingsAccount();
                     System.out.print("Enter Name: ");
                     String name = in.next();
                     System.out.print("Set Password: ");
                     String password = in.next();
                     System.out.print("Enter Initial Balance: ");
                     int balance = in.nextInt();
-                    accounts.add(new SavingsAccount(name, password, balance));
+                    savings.initializeSavings(name, password, balance);
+                    accounts.add(savings);
                     System.out.println("Savings Account created successfully.");
+                    System.out.println("Account Number: " + savings.accNum);
                     break;
-
-                case 2:
+                }
+                case 2: {
+                    CurrentAccount current = new CurrentAccount();
                     System.out.print("Enter Name: ");
-                    name = in.next();
+                    String name = in.next();
                     System.out.print("Set Password: ");
-                    password = in.next();
+                    String password = in.next();
                     System.out.print("Enter Initial Balance: ");
-                    balance = in.nextInt();
-                    accounts.add(new CurrentAccount(name, password, balance));
+                    int balance = in.nextInt();
+                    current.initializeCurrent(name, password, balance);
+                    accounts.add(current);
                     System.out.println("Current Account created successfully.");
+                    System.out.println("Account Number: " + current.accNum);
                     break;
-
-                case 3:
+                }
+                case 3: {
                     Account account = findAccount(accounts, in);
                     if (account != null) {
                         System.out.print("Enter Amount to Deposit: ");
@@ -168,58 +181,55 @@ public class Main {
                         account.deposit(amount);
                     }
                     break;
-
-                case 4:
-                    account = findAccount(accounts, in);
+                }
+                case 4: {
+                    Account account = findAccount(accounts, in);
                     if (account != null) {
                         System.out.print("Enter Amount to Withdraw: ");
                         int amount = in.nextInt();
                         account.withdraw(amount);
                     }
                     break;
-
-                case 5:
-                    account = findAccount(accounts, in);
+                }
+                case 5: {
+                    Account account = findAccount(accounts, in);
                     if (account != null) {
                         System.out.println("Balance: " + account.accBalance);
                     }
                     break;
-
-                case 6:
-                    account = findAccount(accounts, in);
+                }
+                case 6: {
+                    Account account = findAccount(accounts, in);
                     if (account != null) {
                         account.displayDetails();
                     }
                     break;
-
-                case 7:
-                    account = findAccount(accounts, in);
+                }
+                case 7: {
+                    Account account = findAccount(accounts, in);
                     if (account instanceof SavingsAccount savingsAccount) {
                         savingsAccount.computeAndDepositInterest();
                     } else {
                         System.out.println("This feature is for Savings Accounts only.");
                     }
                     break;
-
-                case 8:
-                    account = findAccount(accounts, in);
+                }
+                case 8: {
+                    Account account = findAccount(accounts, in);
                     if (account instanceof CurrentAccount currentAccount) {
                         currentAccount.checkMinimumBalance();
                     } else {
                         System.out.println("This feature is for Current Accounts only.");
                     }
                     break;
-
-                case 0:
-                    quit = true;
-                    break;
-
-                default:
-                    System.out.println("Invalid choice. Please try again.");
+                }
+                case 0: quit = true; break;
+                default: System.out.println("Invalid choice. Please try again."); break;
             }
         }
     }
 
+    // Method to find an account by its number
     private static Account findAccount(List<Account> accounts, Scanner in) {
         System.out.print("Enter Account Number: ");
         int accNum = in.nextInt();
