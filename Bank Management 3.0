@@ -125,7 +125,7 @@ class CurrentAccount extends Account implements Authenticatable {
     }
 }
 
-public class BankOOPproject {
+public class Main {
     public static void main(String[] args) {
         List<Account> accounts = new ArrayList<>();
         Scanner in = new Scanner(System.in);
